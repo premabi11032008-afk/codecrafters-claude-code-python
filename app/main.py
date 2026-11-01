@@ -77,9 +77,17 @@ def get_skill_description(skill_name, arguments):
 def parse(string : str) -> str:
 
     for idx, word in enumerate(words := string.split()):
+        skills_name = []
+
         if word[0] == "/" : 
-            arguments = { idx_ - idx - 1 : words[idx_] for idx_ in range(idx + 1, len(words))}
-            words[idx] = get_skill_description(word[1:], arguments)
+            skills_name.append(word[1:])
+
+        elif len(skills_name ) > 0:
+            arguments = { idx_ - idx : words[idx_] for idx_ in range(idx, len(words))}
+
+            for name in skills_name:
+                words.append(get_skill_description(name, arguments))
+
             break
 
     return " ".join(words)
