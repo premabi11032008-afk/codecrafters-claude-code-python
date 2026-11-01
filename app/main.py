@@ -24,9 +24,9 @@ def tool_call(tool_calls : list[dict]) :
     responses = []
 
     for tool in tool_calls:
-        function_ = tool.get("function")
-        if function_[ "name" ] in tool_registery:
-            response  = tool_registery.get(function_["name"])(**function_["arguments"])
+        function_ = tool.function
+        if function_.name in tool_registery:
+            response  = tool_registery.get(function_.name)(**function_.arguments)
             responses.append({"response" : response, **function_})
 
         else:
