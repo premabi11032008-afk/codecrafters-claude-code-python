@@ -14,12 +14,33 @@ REGRESS_EXP = r"\$ARGUMENTS\[\d+\]|\$ARGUMENTS|\$\d+"
 
 def advertetise_skill():
     skills = ["Available skills:"]
+    
+    # Check if the directory exists first to avoid crashes on other tests
+    if not os.path.exists(".claude/skills"):
+        return ""
 
-    for file in os.listdir(".claude/skills"):
-        with open(f".claude/skills/{file}/SKILL.md") as file_:
-            skill_intro = file_.readlines()
-        intro = skill_intro[2 : 4]
-        skills.append(f" - {intro[0][5:]} : {intro[1][12 : ]}")
+    for file_name in os.listdir(".claude/skills"):
+        skill_path = f".claude/skills/{file_name}/SKILL.md"
+        if not os.path.isfile(skill_path):
+            continue
+            
+        with open(skill_path) as file_:
+            name = ""
+            description = ""
+            
+            for line in file_:
+                line = line.strip()
+                if line.startswith("name:"):
+                    name = line.split(":", 1)[1].strip()
+
+                elif line.startswith("description:"):
+                    description = line.split(":", 1)[1].strip()
+
+                elif line == "---" and name and description:
+                    break
+            
+            if name and description:
+                skills.append(f"- {name}: {description}")
 
     return "\n".join(skills)
 
