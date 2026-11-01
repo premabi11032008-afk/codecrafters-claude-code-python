@@ -11,8 +11,6 @@ from openai import OpenAI
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
 
-print(os.listdir(".claude/skills"))
-
 def get_tool_registery(module):
     available = {}
 
@@ -20,6 +18,22 @@ def get_tool_registery(module):
         available[name] = function
 
     return available
+
+def get_skill_description(skill_name):
+    with open(f".claude/skills/{skill_name}/SKILLS.md") as file:
+        content = file.readlines()
+
+    content = "/n".join(content[4 : ])
+    print( "content = ", content)
+    return content
+
+def parse(string : str) -> str:
+
+    for idx, word in enumerate(words := string.split()):
+        if word[0] == "\\" : 
+            words[idx] = get_skill_description(word[1:])
+
+    return " ".join(words)
 
 
 tool_registery = get_tool_registery(tools)
@@ -114,11 +128,13 @@ def main():
     p.add_argument("-p", required=True)
     args = p.parse_args()
 
+    message = parse(args.p)
+
     if not API_KEY:
         raise RuntimeError("OPENROUTER_API_KEY is not set")
 
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
-    messages = [{"role": "user", "content": args.p}]
+    messages = [{"role": "user", "content": message}]
     print("Logs from your program will appear here!", file=sys.stderr)
 
     while True:
