@@ -11,6 +11,7 @@ from openai import OpenAI
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
 REGRESS_EXP = r"\$ARGUMENTS\[\d+\]|\$ARGUMENTS|\$\d+"
+SKILLS = {}
 
 def advertetise_skill():
     skills = ["Available skills:"]
@@ -23,10 +24,13 @@ def advertetise_skill():
         skill_path = f".claude/skills/{file_name}/SKILL.md"
         if not os.path.isfile(skill_path):
             continue
+        fork = False
             
         with open(skill_path) as file_:
             name = ""
             description = ""
+            val = []
+            line_encountered = 0
             
             for line in file_:
                 line = line.strip()
@@ -36,12 +40,19 @@ def advertetise_skill():
                 elif line.startswith("description:"):
                     description = line.split(":", 1)[1].strip()
 
-                elif line == "---" and name and description:
-                    break
+                elif line.startswith("context: fork") and line_encountered <= 1:
+                    fork = True
+
+                elif line == "---":
+                    line_encountered += 1
+
+                elif name and description:
+                    val.append(line)
                     
             
             if name and description:
                 skills.append(f"- {name}: {description}")
+                SKILLS[name] = {"content" : "\n".join(val), "is_forked" : fork}
 
     return "\n".join(skills)
 
@@ -54,13 +65,13 @@ def get_tool_registery(module):
 
     return available
 
-def Skill(name, args = None):
+def Skill(name, args = None, client = None):
 
     if args is None:
         args = {}
 
-    with open(f".claude/skills/{name}/SKILL.md") as file:
-        content = file.readlines()
+    if name not in SKILLS:
+        return "SKILL Name Does Not  Exits"
 
     def replacement_func(match):
         args_ : dict = args
@@ -75,8 +86,14 @@ def Skill(name, args = None):
         else:
             return args_.get(int(match_[len('$ARGUMENTS') + 2: -1]), "")
         
-    content = "\n".join(content[4 : ])
-    content = re.sub(REGRESS_EXP, replacement_func, content)
+    skill_ = SKILLS.get(name)
+    content = re.sub(REGRESS_EXP, replacement_func, skill_["content"])
+
+    if skill_["is_forked"]:
+        message = [{"role": "user", "content": content}]
+        response = run_agent(client, message)
+        return f"Skill {name} ran in a separate context and returned: {response}"
+
     return content
 
 def parse(string: str) -> str:
@@ -106,13 +123,17 @@ def parse(string: str) -> str:
 tool_registery = get_tool_registery(tools)
 tool_registery["Skill"] = Skill
 
-def tool_call(tool_calls):
+def tool_call(tool_calls, client):
     responses = []
     for tool in tool_calls:
         function_ = tool.function
         if function_.name in tool_registery:
             args = json.loads(function_.arguments)
-            response = tool_registery.get(function_.name)(**args)
+
+            if function_.name == "Skill":
+                response = tool_registery.get(function_.name)(**args, client=client)
+            else:
+                response = tool_registery.get(function_.name)(**args)
             
             responses.append({
                 "tool_call_id": tool.id,
@@ -205,6 +226,27 @@ tools_ = [
   }
 ]
 
+def run_agent(client, messages, tools = tools_):
+    while True:
+    
+        chat = client.chat.completions.create(
+            model="anthropic/claude-haiku-4.5",
+            messages=messages,
+            tools = tools
+        )
+    
+        if not chat.choices or len(chat.choices) == 0:
+            raise RuntimeError("no choices in response")
+    
+        if array := chat.choices[0].message.tool_calls:
+            messages.append(chat.choices[0].message)
+    
+            responses = tool_call(array, client)
+            messages.extend(responses)
+    
+        else:
+            return chat.choices[0].message.content
+
 
 def main():
     p = argparse.ArgumentParser()
@@ -223,27 +265,8 @@ def main():
     messages = [{"role": "user", "content": message}]
 
     print("Logs from your program will appear here!", file=sys.stderr)
-
-    while True:
-
-        chat = client.chat.completions.create(
-            model="anthropic/claude-haiku-4.5",
-            messages=messages,
-            tools = tools_
-        )
-
-        if not chat.choices or len(chat.choices) == 0:
-            raise RuntimeError("no choices in response")
-
-        if array := chat.choices[0].message.tool_calls:
-            messages.append(chat.choices[0].message)
-
-            responses = tool_call(array)
-            messages.extend(responses)
-
-        else:
-            print(chat.choices[0].message.content)
-            break
+    print(run_agent(client, messages))
+    
 
 
 if __name__ == "__main__":
