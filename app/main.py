@@ -3,6 +3,8 @@ import os
 import sys
 import inspect
 from . import tools
+import json
+
 
 from openai import OpenAI
 
@@ -19,8 +21,6 @@ def get_tool_registery(module):
 
 
 tool_registery = get_tool_registery(tools)
-
-import json
 
 def tool_call(tool_calls):
     responses = []
@@ -48,7 +48,7 @@ def tool_call(tool_calls):
 
 
 
-tools = [
+tools_ = [
     {
   "type": "function",
   "function": {
@@ -78,25 +78,26 @@ def main():
         raise RuntimeError("OPENROUTER_API_KEY is not set")
 
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
-
-    chat = client.chat.completions.create(
-        model="anthropic/claude-haiku-4.5",
-        messages=[{"role": "user", "content": args.p}],
-        tools = tools
-    )
-
-    if not chat.choices or len(chat.choices) == 0:
-        raise RuntimeError("no choices in response")
-
-    #print(chat.choices[0].message)
-
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
+    messages = [{"role": "user", "content": args.p}]
     print("Logs from your program will appear here!", file=sys.stderr)
 
-    if array := chat.choices[0].message.tool_calls:
-            responses = tool_call(array)
-    else:
-        print(chat.choices[0].message.content)
+    while True:
+
+        chat = client.chat.completions.create(
+            model="anthropic/claude-haiku-4.5",
+            messages=messages,
+            tools = tools_
+        )
+
+        if not chat.choices or len(chat.choices) == 0:
+            raise RuntimeError("no choices in response")
+
+        if array := chat.choices[0].message.tool_calls:
+                responses = tool_call(array)
+                messages.extend(responses)
+        else:
+            print(chat.choices[0].message.content)
+            break
 
 
 if __name__ == "__main__":
