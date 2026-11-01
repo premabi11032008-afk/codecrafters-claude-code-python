@@ -75,10 +75,10 @@ def get_skill_description(skill_name, arguments):
     return content
 
 def parse(string : str) -> str:
+    skills_name = []
+    final_list = []
 
     for idx, word in enumerate(words := string.split()):
-        skills_name = []
-
         if word[0] == "/" : 
             skills_name.append(word[1:])
 
@@ -86,11 +86,11 @@ def parse(string : str) -> str:
             arguments = { idx_ - idx : words[idx_] for idx_ in range(idx, len(words))}
 
             for name in skills_name:
-                words.append(get_skill_description(name, arguments))
+                final_list.append(get_skill_description(name, arguments))
 
             break
 
-    return " ".join(words)
+    return " ".join(words if len(skills_name) == 0 else  final_list) 
 
 
 tool_registery = get_tool_registery(tools)
