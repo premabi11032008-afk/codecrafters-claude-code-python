@@ -12,6 +12,18 @@ API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
 REGRESS_EXP = r"\$ARGUMENTS\[\d+\]|\$ARGUMENTS|\$\d+"
 
+def advertetise_skill():
+    skills = ["Available skills:"]
+
+    for file in os.listdir(".claude/skills"):
+        with open(f".claude/skills/{file}/SKILL.md") as file_:
+            skill_intro = file_.readlines()
+        intro = skill_intro[2 : 4]
+        skills.append(f" - {intro[0][5:]} : {intro[1][12 : ]}")
+
+    return "\n".join(skills)
+
+
 def get_tool_registery(module):
     available = {}
 
@@ -150,7 +162,7 @@ def main():
         raise RuntimeError("OPENROUTER_API_KEY is not set")
 
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
-    messages = [{"role": "user", "content": message}]
+    messages = [{"role": "user", "content": message + "\n" + advertetise_skill()}]
     print("Logs from your program will appear here!", file=sys.stderr)
 
     while True:
