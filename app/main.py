@@ -27,7 +27,6 @@ def advertetise_skill():
         with open(skill_path) as file_:
             name = ""
             description = ""
-            val  = []
             
             for line in file_:
                 line = line.strip()
@@ -55,7 +54,11 @@ def get_tool_registery(module):
 
     return available
 
-def Skill(name, args):
+def Skill(name, args = None):
+
+    if args is None:
+        args = {}
+
     with open(f".claude/skills/{name}/SKILL.md") as file:
         content = file.readlines()
 
