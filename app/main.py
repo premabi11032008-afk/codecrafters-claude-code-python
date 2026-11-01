@@ -20,7 +20,7 @@ def get_tool_registery(module):
     return available
 
 def get_skill_description(skill_name):
-    with open(f".claude/skills/{skill_name}/SKILLS.md") as file:
+    with open(f".claude/skills/{skill_name}/SKILL.md") as file:
         content = file.readlines()
 
     content = "/n".join(content[4 : ])
