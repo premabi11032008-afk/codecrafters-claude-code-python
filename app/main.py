@@ -32,7 +32,7 @@ def get_skill_description(skill_name, arguments):
             return args.get(int(match_[ 1 : ]), "")
 
         elif match_ == '$ARGUMENTS':
-            return " ".join(args)
+            return " ".join(args.values())
 
         else:
             return args.get(int(match_[len('$ARGUMENTS') + 2: -1]), "")
