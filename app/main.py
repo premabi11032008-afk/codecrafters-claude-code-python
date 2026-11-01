@@ -4,12 +4,13 @@ import sys
 import inspect
 from . import tools
 import json
-
+import re
 
 from openai import OpenAI
 
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
+REGRESS_EXP = r"\$ARGUMENTS\[\d+\]|\$ARGUMENTS|\$\d+"
 
 def get_tool_registery(module):
     available = {}
@@ -19,18 +20,34 @@ def get_tool_registery(module):
 
     return available
 
-def get_skill_description(skill_name):
+def get_skill_description(skill_name, arguments):
     with open(f".claude/skills/{skill_name}/SKILL.md") as file:
         content = file.readlines()
 
+    def replacement_func(match):
+        args : dict = arguments
+        match_ : str = match.group(0)
+
+        if match_[1 : ].isdigit():
+            return args.get(int(match_[ 1 : ]), "")
+
+        elif match == '$ARGUMENTS':
+            return " ".join(args)
+
+        else:
+            return args.get(int(match[len('$ARGUMENTS') + 2: -1]), "")
+        
     content = "/n".join(content[4 : ])
+    re.sub(REGRESS_EXP, replacement_func, content)
     return content
 
 def parse(string : str) -> str:
 
     for idx, word in enumerate(words := string.split()):
         if word[0] == "/" : 
-            words[idx] = get_skill_description(word[1:])
+            arguments = { idx : words[idx] for idx in range(idx + 1, len(words))}
+            words[idx] = get_skill_description(word[1:], arguments)
+            break
 
     return " ".join(words)
 
