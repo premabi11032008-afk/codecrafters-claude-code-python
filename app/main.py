@@ -35,7 +35,7 @@ def get_skill_description(skill_name, arguments):
             return " ".join(args)
 
         else:
-            return args.get(int(match[len('$ARGUMENTS') + 2: -1]), "")
+            return args.get(int(match_[len('$ARGUMENTS') + 2: -1]), "")
         
     content = "/n".join(content[4 : ])
     re.sub(REGRESS_EXP, replacement_func, content)
