@@ -163,6 +163,7 @@ def main():
 
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
     messages = [{"role": "user", "content": message + "\n" + advertetise_skill()}]
+    print("INTIALL MESSAGE" , messages)
     print("Logs from your program will appear here!", file=sys.stderr)
 
     while True:
