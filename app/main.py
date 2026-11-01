@@ -191,7 +191,10 @@ def main():
         raise RuntimeError("OPENROUTER_API_KEY is not set")
 
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
-    messages = [{"role": "user", "content": message + "\n" + advertetise_skill()}]
+    if message == args.p:
+        message + "\n" + advertetise_skill()
+
+    messages = [{"role": "user", "content": message}]
 
     print("Logs from your program will appear here!", file=sys.stderr)
 
