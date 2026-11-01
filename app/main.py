@@ -1,11 +1,38 @@
 import argparse
 import os
 import sys
+import inspect
+from . import tools
 
 from openai import OpenAI
 
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
+
+def get_tool_registery(module):
+    available = {}
+
+    for name, function in inspect.getmembers(module, inspect.isfunction):
+        available[name] = function
+
+    return available
+
+
+tool_registery = get_tool_registery(tools)
+
+def tool_call(tool_calls : list[dict]) :
+    responses = []
+
+    for tool in tool_calls:
+        function_ = tool.get("function")
+        if function_[ "name" ] in tool_registery:
+            response  = tool_registery.get(function_["name"])(**function_["arguments"])
+            responses.append({"response" : response, **function_})
+
+        else:
+            responses.append({"response" : "Function NOT found", **function_})
+
+
 
 tools = [
     {
@@ -46,6 +73,9 @@ def main():
 
     if not chat.choices or len(chat.choices) == 0:
         raise RuntimeError("no choices in response")
+
+    if array := chat.choices[0].message.get("tool_calls", False):
+        responses = tool_call(array)
 
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
