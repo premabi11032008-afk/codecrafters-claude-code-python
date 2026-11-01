@@ -74,23 +74,27 @@ def get_skill_description(skill_name, arguments):
     content = re.sub(REGRESS_EXP, replacement_func, content)
     return content
 
-def parse(string : str) -> str:
+def parse(string: str) -> str:
+    words = string.split()
     skills_name = []
-    final_list = []
-
-    for idx, word in enumerate(words := string.split()):
-        if word[0] == "/" : 
+    arguments = {}
+    
+    arg_idx = 0
+    for word in words:
+        if word.startswith("/"):
             skills_name.append(word[1:])
+        else:
+            arguments[arg_idx] = word
+            arg_idx += 1
 
-        elif len(skills_name ) > 0:
-            arguments = { idx_ - idx : words[idx_] for idx_ in range(idx, len(words))}
+    if not skills_name:
+        return string
 
-            for name in skills_name:
-                final_list.append(get_skill_description(name, arguments))
+    final_list = []
+    for name in skills_name:
+        final_list.append(get_skill_description(name, arguments))
 
-            break
-
-    return " ".join(words if len(skills_name) == 0 else  final_list) 
+    return "\n\n".join(final_list) 
 
 
 tool_registery = get_tool_registery(tools)
@@ -192,7 +196,7 @@ def main():
 
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
     if message == args.p:
-        message + "\n" + advertetise_skill()
+        message = message + "\n" + advertetise_skill()
 
     messages = [{"role": "user", "content": message}]
 
