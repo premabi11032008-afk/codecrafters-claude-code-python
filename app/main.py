@@ -24,7 +24,6 @@ def get_skill_description(skill_name):
         content = file.readlines()
 
     content = "/n".join(content[4 : ])
-    print( "content = ", content)
     return content
 
 def parse(string : str) -> str:
