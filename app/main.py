@@ -30,7 +30,7 @@ def get_skill_description(skill_name):
 def parse(string : str) -> str:
 
     for idx, word in enumerate(words := string.split()):
-        if word[0] == "\\" : 
+        if word[0] == "/" : 
             words[idx] = get_skill_description(word[1:])
 
     return " ".join(words)
