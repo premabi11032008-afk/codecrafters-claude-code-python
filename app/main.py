@@ -20,17 +20,31 @@ def get_tool_registery(module):
 
 tool_registery = get_tool_registery(tools)
 
-def tool_call(tool_calls : list[dict]) :
-    responses = []
+import json
 
+def tool_call(tool_calls):
+    responses = []
     for tool in tool_calls:
         function_ = tool.function
         if function_.name in tool_registery:
-            response  = tool_registery.get(function_.name)(**function_.arguments)
-            responses.append({"response" : response, **function_})
-
+            args = json.loads(function_.arguments)
+            response = tool_registery.get(function_.name)(**args)
+            
+            responses.append({
+                "tool_call_id": tool.id,
+                "role": "tool",
+                "name": function_.name,
+                "content": str(response)
+            })
         else:
-            responses.append({"response" : "Function NOT found", **function_})
+            responses.append({
+                "tool_call_id": tool.id,
+                "role": "tool",
+                "name": function_.name,
+                "content": "Function NOT found"
+            })
+            
+    return responses 
 
 
 
