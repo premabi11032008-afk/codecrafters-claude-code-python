@@ -11,6 +11,8 @@ from openai import OpenAI
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
 
+print(os.listdir(".claude/skills"))
+
 def get_tool_registery(module):
     available = {}
 
