@@ -11,5 +11,9 @@ def Write(file_path : str, content : str):
         file.write(content)
 
 def Bash(command : str):
-    res = subprocess.run(command.split(), capture_output=True )
-    return res
+    res = subprocess.run(command, shell=True, capture_output=True, text=True)
+    
+    if res.returncode == 0:
+        return res.stdout
+    else:
+        return res.stderr
