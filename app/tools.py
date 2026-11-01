@@ -7,7 +7,7 @@ def Read(file_path : str) :
             files = os.listdir(file_path)
             return f"Directory '{file_path}' contains:\n" + "\n".join(files)
         
-        except:
+        except Exception as e:
             return f"Error on Opening Directory  : {e}"
 
     if os.path.isfile(file_path):
@@ -15,7 +15,7 @@ def Read(file_path : str) :
             with open(file_path, "r") as file:
                 return file.read()
         
-        except:
+        except Exception as e:
             return f"Error on File Directory  : {e}"
 
     return "Error : Path is not found"

@@ -27,6 +27,7 @@ def advertetise_skill():
         with open(skill_path) as file_:
             name = ""
             description = ""
+            val  = []
             
             for line in file_:
                 line = line.strip()
@@ -38,6 +39,7 @@ def advertetise_skill():
 
                 elif line == "---" and name and description:
                     break
+                    
             
             if name and description:
                 skills.append(f"- {name}: {description}")
@@ -53,22 +55,22 @@ def get_tool_registery(module):
 
     return available
 
-def get_skill_description(skill_name, arguments):
-    with open(f".claude/skills/{skill_name}/SKILL.md") as file:
+def Skill(name, args):
+    with open(f".claude/skills/{name}/SKILL.md") as file:
         content = file.readlines()
 
     def replacement_func(match):
-        args : dict = arguments
+        args_ : dict = args
         match_ : str = match.group(0)
 
         if match_[1 : ].isdigit():
-            return args.get(int(match_[ 1 : ]), "")
+            return args_.get(int(match_[ 1 : ]), "")
 
         elif match_ == '$ARGUMENTS':
-            return " ".join(args.values())
+            return " ".join(args_.values())
 
         else:
-            return args.get(int(match_[len('$ARGUMENTS') + 2: -1]), "")
+            return args_.get(int(match_[len('$ARGUMENTS') + 2: -1]), "")
         
     content = "\n".join(content[4 : ])
     content = re.sub(REGRESS_EXP, replacement_func, content)
@@ -93,12 +95,13 @@ def parse(string: str) -> str:
     final_list = []
     for name in skills_name:
         final_list.append(f"Skill: {name} (located at .claude/skills/{name})\nPaths in the instructions below are relative to that folder.")
-        final_list.append(get_skill_description(name, arguments))
+        final_list.append(Skill(name, arguments))
 
     return "\n\n".join(final_list) 
 
 
 tool_registery = get_tool_registery(tools)
+tool_registery["Skill"] = Skill
 
 def tool_call(tool_calls):
     responses = []
@@ -181,7 +184,22 @@ tools_ = [
       }
     }
   }
-}
+},
+{
+    "type": "function",
+    "function": {
+      "name": "Skill",
+      "description": "Load a skill's instructions into the conversation",
+      "parameters": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "description": "The name of the skill to use" },
+          "args": { "type": "string", "description": "Optional arguments for the skill" }
+        }
+      }
+    }
+  }
 ]
 
 
