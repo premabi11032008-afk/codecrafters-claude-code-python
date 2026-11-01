@@ -31,7 +31,7 @@ def get_skill_description(skill_name, arguments):
         if match_[1 : ].isdigit():
             return args.get(int(match_[ 1 : ]), "")
 
-        elif match == '$ARGUMENTS':
+        elif match_ == '$ARGUMENTS':
             return " ".join(args)
 
         else:
