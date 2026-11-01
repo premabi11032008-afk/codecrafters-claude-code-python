@@ -93,8 +93,9 @@ def main():
             raise RuntimeError("no choices in response")
 
         if array := chat.choices[0].message.tool_calls:
-                responses = tool_call(array)
-                messages.extend(responses)
+            responses = tool_call(array)
+            messages.extend(responses)
+            
         else:
             print(chat.choices[0].message.content)
             break
