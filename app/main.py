@@ -109,7 +109,7 @@ def parse(string: str) -> str:
 
     final_list = []
     for name in skills_name:
-        final_list.append(f"Skill: {name} (located at .claude/skills/{name})\nPaths in the instructions below are relative to that folder.")
+        final_list.append(f"The skill {name} is located at .claude/skills/{name}\nPaths in the instructions below are relative to that folder.")
         final_list.append(Skill(name, arguments))
 
     return "\n\n".join(final_list) 
