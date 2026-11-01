@@ -1,10 +1,24 @@
 import subprocess
+import os
 
 def Read(file_path : str) :
-    with open(f"{file_path}", "r") as file:
-        content = file.read() 
+    if os.path.isdir(file_path):
+        try:
+            files = os.listdir(file_path)
+            return f"Directory '{file_path}' contains:\n" + "\n".join(files)
+        
+        except:
+            return f"Error on Opening Directory  : {e}"
 
-    return  content
+    if os.path.isfile(file_path):
+        try:
+            with open(file_path, "r") as file:
+                return file.read()
+        
+        except:
+            return f"Error on File Directory  : {e}"
+
+    return "Error : Path is not found"
 
 def Write(file_path : str, content : str):
     with open(f"{file_path}", "w") as file:
