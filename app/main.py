@@ -65,6 +65,27 @@ tools_ = [
       "required": ["file_path"]
     }
   }
+},
+{
+  "type": "function",
+  "function": {
+    "name": "Write",
+    "description": "Write content to a file",
+    "parameters": {
+      "type": "object",
+      "required": ["file_path", "content"],
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The path of the file to write to"
+        },
+        "content": {
+          "type": "string",
+          "description": "The content to write to the file"
+        }
+      }
+    }
+  }
 }
 ]
 
@@ -94,7 +115,7 @@ def main():
 
         if array := chat.choices[0].message.tool_calls:
             messages.append(chat.choices[0].message)
-            
+
             responses = tool_call(array)
             messages.extend(responses)
 
