@@ -37,15 +37,15 @@ def get_skill_description(skill_name, arguments):
         else:
             return args.get(int(match_[len('$ARGUMENTS') + 2: -1]), "")
         
-    content = "/n".join(content[4 : ])
-    re.sub(REGRESS_EXP, replacement_func, content)
+    content = "\n".join(content[4 : ])
+    content = re.sub(REGRESS_EXP, replacement_func, content)
     return content
 
 def parse(string : str) -> str:
 
     for idx, word in enumerate(words := string.split()):
         if word[0] == "/" : 
-            arguments = { idx : words[idx] for idx in range(idx + 1, len(words))}
+            arguments = { idx_ - idx - 1 : words[idx_] for idx_ in range(idx + 1, len(words))}
             words[idx] = get_skill_description(word[1:], arguments)
             break
 
