@@ -80,7 +80,7 @@ def LSP(operation: str, filePath: str, line: int, character: int):
             res = res[0]
 
         file_path = uri_to_path(res.get("uri", ""))
-        start_coords = res.get("start", {})
+        start_coords = res.get("range").get("start")
 
         start_line = start_coords.get("line") + 1
         start_char = start_coords.get("character") + 1
