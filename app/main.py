@@ -2,10 +2,10 @@ import argparse
 import os
 import sys
 import inspect
-from . import tools, lsp_client
+from . import tools
 import json
 import re
-from tool_list import tools_
+from .tool_list import tools_
 
 from openai import OpenAI
 
