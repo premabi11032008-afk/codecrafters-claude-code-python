@@ -31,3 +31,6 @@ def Bash(command : str):
         return res.stdout
     else:
         return res.stderr
+
+def LSP(operation: str, filePath: str, line: int, character: int):
+    return "LSP is not implemented yet"
