@@ -47,24 +47,33 @@ def LSP(operation: str, filePath: str, line: int, character: int):
         except ValueError:
             return str(abs_path)
 
+    def extract_path_start_line_char(arg: dict):
+        file_path = uri_to_path(arg.get("uri", ""))
+        start_coords = arg.get("range").get("start")
+
+        start_line = start_coords.get("line") + 1
+        start_char = start_coords.get("character") + 1
+
+        return file_path, start_line, start_char
+
+    path_ = Path(filePath).resolve()
+    uri = path_.as_uri()
+
+    if uri not in opened_uris:
+
+        content = path_.read_text()
+        client.notify("textDocument/didOpen", {
+            "textDocument": {
+            "uri": uri,
+            "languageId": "python",
+            "version": 1,
+            "text": content
+            }
+        })
+
+        opened_uris.add(uri)
+
     if operation == "goToDefinition":
-
-        path_ = Path(filePath).resolve()
-        uri = path_.as_uri()
-
-        if uri not in opened_uris:
-
-            content = path_.read_text()
-            client.notify("textDocument/didOpen", {
-                "textDocument": {
-                "uri": uri,
-                "languageId": "python",
-                "version": 1,
-                "text": content
-                }
-            })
-
-            opened_uris.add(uri)
 
         res = client.request("textDocument/definition",{
             "textDocument": { "uri": uri },
@@ -74,13 +83,28 @@ def LSP(operation: str, filePath: str, line: int, character: int):
         if not res:
             return "Definition Not Found"
 
-        if isinstance(res, list):
-            res = res[0]
-
-        file_path = uri_to_path(res.get("uri", ""))
-        start_coords = res.get("range").get("start")
-
-        start_line = start_coords.get("line") + 1
-        start_char = start_coords.get("character") + 1
-
+        file_path, start_line, start_char = extract_path_start_line_char(res)        
         return f"Defined in {file_path}:{start_line}:{start_char}"
+
+    elif operation == "findReferences":
+        res = client.request("textDocument/references",{
+            "textDocument": { "uri": uri },
+            "position": { "line": line - 1, "character": character - 1 },
+            "context": { "includeDeclaration": True }
+        })
+
+        if not res:
+            return "Definition Not Found"
+
+        file_refrences = {}
+        for file in res:
+            path, line_, char_ = extract_path_start_line_char(file)
+            file_refrences[path] = file_refrences.get(path, []).append(f"Line {line_}:{char_}")
+
+        final_string = [f"Found {len(res)} references across {len(file_refrences)} files:\n"]
+        for path in file_refrences:
+            final_string.append(path)
+            final_string.extend(file_refrences[path])
+            final_string.append("\n")
+
+        return "\n".join( final_string[:-1] )

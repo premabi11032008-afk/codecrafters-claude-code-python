@@ -79,7 +79,7 @@ tools_ = [
       "properties": {
         "operation": {
           "type": "string",
-          "enum": ["goToDefinition"]
+          "enum": ["goToDefinition", "findReferences"]
         },
         "filePath": {
           "type": "string",
