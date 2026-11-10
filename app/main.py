@@ -9,7 +9,7 @@ from .tool_list import tools_
 
 from openai import OpenAI
 
-os.environ["lsp_client"] = lsp_client.LSPClient.from_environment()
+tools.lsp_client = lsp_client.LSPClient.from_environment()
 
 def advertetise_skill():
     skills = ["Available skills:"]
