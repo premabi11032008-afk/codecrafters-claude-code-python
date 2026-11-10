@@ -1,5 +1,11 @@
 import subprocess
 import os
+import os
+from pathlib import Path
+from urllib.parse import urlparse, unquote
+from .lsp_client import LSPClient
+
+opened_uris = set()
 
 def Read(file_path : str) :
     if os.path.isdir(file_path):
@@ -33,4 +39,50 @@ def Bash(command : str):
         return res.stderr
 
 def LSP(operation: str, filePath: str, line: int, character: int):
-    return "LSP is not implemented yet"
+    client = LSPClient.from_environment()
+
+    def uri_to_path(uri: str) -> str:
+        parsed = urlparse(uri)
+        abs_path = Path(unquote(parsed.path))
+        try:
+            return str(abs_path.relative_to(Path.cwd()))
+        except ValueError:
+            return str(abs_path)
+
+    if operation == "goToDefinition":
+
+        path_ = Path(filePath).resolve()
+        uri = path_.as_uri()
+
+        if uri not in opened_uris:
+
+            content = path_.read_text()
+            client.notify("textDocument/didOpen", {
+                "textDocument": {
+                "uri": uri,
+                "languageId": "python",
+                "version": 1,
+                "text": content
+                }
+            })
+
+            opened_uris.add(uri)
+
+        res = client.request("textDocument/definition",{
+            "textDocument": { "uri": uri },
+            "position": { "line": line - 1, "character": character - 1 }
+        })
+
+        if not res:
+            return "Definition Not Found"
+
+        if isinstance(res, list):
+            res = res[0]
+
+        file_path = uri_to_path(res.get("uri", ""))
+        start_coords = res.get("start", {})
+
+        start_line = start_coords.get("line") + 1
+        start_char = start_coords.get("character") + 1
+
+        return f"Defined in {file_path}:{start_line}:{start_char}"
