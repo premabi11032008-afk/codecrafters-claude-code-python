@@ -39,8 +39,6 @@ def Bash(command : str):
         return res.stderr
 
 def LSP(operation: str, filePath: str, line: int, character: int):
-    client = os.environ.get("lsp_client")
-
     def uri_to_path(uri: str) -> str:
         parsed = urlparse(uri)
         abs_path = Path(unquote(parsed.path))
