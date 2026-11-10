@@ -2,7 +2,8 @@ import argparse
 import os
 import sys
 import inspect
-from . import tools, LSPClient
+from . import tools
+from .lsp_client import LSPClient
 import json
 import re
 
