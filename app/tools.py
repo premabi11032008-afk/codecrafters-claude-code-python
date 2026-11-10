@@ -99,7 +99,7 @@ def LSP(operation: str, filePath: str, line: int, character: int):
         file_refrences = {}
         for file in res:
             path, line_, char_ = extract_path_start_line_char(file)
-            file_refrences[path] = file_refrences.get(path, []).append(f"Line {line_}:{char_}")
+            file_refrences.setdefault(path, []).append(f"Line {line_}:{char_}")
 
         final_string = [f"Found {len(res)} references across {len(file_refrences)} files:\n"]
         for path in file_refrences:
