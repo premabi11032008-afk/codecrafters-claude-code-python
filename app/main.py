@@ -2,13 +2,14 @@ import argparse
 import os
 import sys
 import inspect
-from . import tools
+from . import tools, lsp_client
 import json
 import re
 from .tool_list import tools_
 
 from openai import OpenAI
 
+os.environ["lsp_client"] = lsp_client.LSPClient.from_environment()
 
 def advertetise_skill():
     skills = ["Available skills:"]
