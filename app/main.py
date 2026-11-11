@@ -50,7 +50,6 @@ def formate_notification(notifications: list):
     return "\n".join(final_string[:-1]) + "</new-diagnostics>"
 
 
-
 def advertetise_skill():
     skills = ["Available skills:"]
     
@@ -161,6 +160,8 @@ tool_registery = get_tool_registery(tools)
 tool_registery["Skill"] = Skill
 
 def tool_call(tool_calls, client):
+    global cursor
+    
     responses = []
     for tool in tool_calls:
         function_ = tool.function
@@ -178,6 +179,15 @@ def tool_call(tool_calls, client):
                 "name": function_.name,
                 "content": str(response)
             })
+
+            res = lsp_client_.notifications(after = cursor)
+            cursor = res.get("cursor", 0)
+            new_messages = res.get("notifications", [])
+
+            formated_notifications = formate_notification(new_messages)
+            if formated_notifications != "":
+                response["content"] += formated_notifications
+
         else:
             responses.append({
                 "tool_call_id": tool.id,
@@ -196,8 +206,6 @@ skills_list = advertetise_skill()
 
 
 def run_agent(client, messages, tools = tools_):
-    global cursor
-
     while True:
     
         chat = client.chat.completions.create(
@@ -214,14 +222,6 @@ def run_agent(client, messages, tools = tools_):
     
             responses = tool_call(array, client)
             messages.extend(responses)
-
-            res = lsp_client_.notifications(after = cursor)
-            cursor = res.get("cursor", 0)
-            new_messages = res.get("notifications", [])
-
-            formated_notifications = formate_notification(new_messages)
-            if formated_notifications != "":
-                messages.append(formated_notifications)
         else:
             return chat.choices[0].message.content
 
