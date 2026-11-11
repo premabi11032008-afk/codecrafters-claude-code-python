@@ -6,7 +6,7 @@ from . import tools, lsp_client
 import json
 import re
 from .tool_list import tools_
-from utils import extract_path_start_line_char
+from .utils import extract_path_start_line_char
 
 from openai import OpenAI
 
