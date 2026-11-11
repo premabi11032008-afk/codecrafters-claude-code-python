@@ -2,7 +2,7 @@ import subprocess
 import os
 import os
 from pathlib import Path
-from utils import extract_path_start_line_char
+from .utils import extract_path_start_line_char
 
 opened_uris = {}
 client = None
