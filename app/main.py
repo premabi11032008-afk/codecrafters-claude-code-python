@@ -190,7 +190,12 @@ def tool_call(tool_calls, client):
             formated_notifications = ""
 
             if lsp_client_ is not None and function_.name == "Write":
-                time.sleep(0.1)
+                if function_.name == "Write":
+                    for _ in range(10):  
+                        res = lsp_client_.notifications(after=cursor)
+                        if res.get("notifications"):
+                            break 
+                        time.sleep(0.05) 
 
                 res = lsp_client_.notifications(after = cursor)
                 cursor = res.get("cursor", 0)
