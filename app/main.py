@@ -238,7 +238,10 @@ def main():
     if message == args.p:
         message = message + "\n" + skills_list
 
-    messages = [{"role": "user", "content": message}]
+    messages = [{"role": "system","content": "You are a coding agent. You MUST use the provided tools to interact with the \
+                 file system, run bash commands, and query the Language Server. Never guess or hallucinate command outputs, \
+                 file contents, or test results. Always execute the Bash tool to run tests and read the output before summarizing."},
+                {"role": "user", "content": message}]
 
     print("Logs from your program will appear here!", file=sys.stderr)
     print(run_agent(client, messages))
