@@ -3,9 +3,8 @@ import os
 import os
 from pathlib import Path
 from urllib.parse import urlparse, unquote
-from .lsp_client import LSPClient
 
-opened_uris = set()
+opened_uris = {}
 
 def Read(file_path : str) :
     if os.path.isdir(file_path):
@@ -29,6 +28,23 @@ def Read(file_path : str) :
 def Write(file_path : str, content : str):
     with open(f"{file_path}", "w") as file:
         file.write(content)
+
+    path_ = Path(file_path).resolve()
+    uri = path_.as_uri()
+
+    operation = "textDocument/didChange" if uri in opened_uris else "textDocument/didOpen"
+    version = opened_uris.get(uri, 0) + 1
+    opened_uris[uri] = version
+
+    client.notify(operation, {
+        "textDocument": {
+        "uri": uri,
+        "languageId": "python",
+        "version": version,
+        "text": content
+        }
+    })
+
 
 def Bash(command : str):
     res = subprocess.run(command, shell=True, capture_output=True, text=True)
@@ -71,7 +87,7 @@ def LSP(operation: str, filePath: str, line: int, character: int):
             }
         })
 
-        opened_uris.add(uri)
+        opened_uris[uri] = 1
 
     if operation == "goToDefinition":
 
