@@ -6,7 +6,7 @@ from . import tools, lsp_client
 import json
 import re
 from .tool_list import tools_
-from .utils import extract_path_start_line_char
+from .utils import uri_to_path
 
 from openai import OpenAI
 
@@ -14,17 +14,29 @@ lsp_client_ = lsp_client.LSPClient.from_environment()
 tools.client = lsp_client_
 cursor = 0
 
-def formate_notification(notifications : list):
+def formate_notification(notifications: list):
     file_refrences = {}
     for notification in notifications:
-        notification = notification.get("params", {})
-        version = notification.get("version")
+        params = notification.get("params", {})
+        version = params.get("version")
+        uri = params.get("uri")
 
-        if version is not None and tools.opened_uris.get(notification.get("uri"), 1) != version:
+        if version is not None and tools.opened_uris.get(uri, 1) != version:
             continue
 
-        path, line_, char_ = extract_path_start_line_char(notification)
-        file_refrences.setdefault(path, []).append(f"   [Line {line_}:{char_}] {notification.get("message")}")
+        path = uri_to_path(uri) 
+
+        diagnostics_list = params.get("diagnostics", [])
+        file_refrences[path] = [] 
+
+        for diag in diagnostics_list:
+            start = diag.get("range", {}).get("start", {})
+
+            line_ = start.get("line", 0) + 1
+            char_ = start.get("character", 0) + 1
+            message = diag.get("message", "")
+            
+            file_refrences[path].append(f"   [Line {line_}:{char_}] {message}")
 
     if file_refrences == {}:
         return ""
