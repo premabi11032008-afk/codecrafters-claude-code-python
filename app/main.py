@@ -195,7 +195,7 @@ def tool_call(tool_calls, client):
                         res = lsp_client_.notifications(after=cursor)
                         if res.get("notifications"):
                             break 
-                        time.sleep(0.05) 
+                        time.sleep(0.01) 
 
                 res = lsp_client_.notifications(after = cursor)
                 cursor = res.get("cursor", 0)
