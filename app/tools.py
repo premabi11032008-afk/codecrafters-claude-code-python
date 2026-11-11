@@ -32,18 +32,30 @@ def Write(file_path : str, content : str):
     path_ = Path(file_path).resolve()
     uri = path_.as_uri()
 
-    operation = "textDocument/didChange" if uri in opened_uris else "textDocument/didOpen"
-    version = opened_uris.get(uri, 0) + 1
-    opened_uris[uri] = version
+    if uri in opened_uris:
+        operation = "textDocument/didChange"
+        opened_uris[uri] += 1
 
-    client.notify(operation, {
-        "textDocument": {
-        "uri": uri,
-        "languageId": "python",
-        "version": version,
-        "text": content
+        params ={
+            "textDocument": { "uri": uri, "version": opened_uris.get(uri) },
+            "contentChanges": [{ "text": content }]
         }
-    })
+
+    else:
+        operation = "textDocument/didOpen"
+        opened_uris[uri] = 1
+
+        params ={
+        "textDocument": {
+            "uri": uri,
+            "languageId": "python",
+            "version": 1,
+            "text": content
+            }
+        }
+
+
+    client.notify(operation, params)
 
 
 def Bash(command : str):
