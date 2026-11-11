@@ -6,6 +6,7 @@ from . import tools, lsp_client
 import json
 import re
 from .tool_list import tools_
+import time
 from .utils import uri_to_path
 
 from openai import OpenAI
@@ -189,6 +190,8 @@ def tool_call(tool_calls, client):
             formated_notifications = ""
 
             if lsp_client_ is not None:
+                time.sleep(0.5)
+
                 res = lsp_client_.notifications(after = cursor)
                 cursor = res.get("cursor", 0)
                 new_messages = res.get("notifications", [])
