@@ -172,21 +172,19 @@ def tool_call(tool_calls, client):
                 response = tool_registery.get(function_.name)(**args, client=client)
             else:
                 response = tool_registery.get(function_.name)(**args)
-            
-            responses.append({
-                "tool_call_id": tool.id,
-                "role": "tool",
-                "name": function_.name,
-                "content": str(response)
-            })
 
             res = lsp_client_.notifications(after = cursor)
             cursor = res.get("cursor", 0)
             new_messages = res.get("notifications", [])
 
             formated_notifications = formate_notification(new_messages)
-            if formated_notifications != "":
-                response["content"] += formated_notifications
+            
+            responses.append({
+                "tool_call_id": tool.id,
+                "role": "tool",
+                "name": function_.name,
+                "content": str(response) + formated_notifications
+            })
 
         else:
             responses.append({
