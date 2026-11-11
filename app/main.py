@@ -12,42 +12,55 @@ from openai import OpenAI
 
 lsp_client_ = lsp_client.LSPClient.from_environment()
 tools.client = lsp_client_
+
+last_shown_diagnostics = {}
 cursor = 0
 
 def formate_notification(notifications: list):
-    file_refrences = {}
+    global last_shown_diagnostics
+    
+    latest_reports = {}
     for notification in notifications:
         params = notification.get("params", {})
+        uri = params.get("uri", "")
         version = params.get("version")
-        uri = params.get("uri")
+        
+        if version is not None and uri in tools.opened_uris:
+            if tools.opened_uris[uri] != version:
+                continue  
+                
+        latest_reports[uri] = params.get("diagnostics", [])
 
-        if version is not None and tools.opened_uris.get(uri, 1) != version:
-            continue
-
-        path = uri_to_path(uri) 
-
-        diagnostics_list = params.get("diagnostics", [])
-        file_refrences[path] = [] 
-
+    new_issues_to_show = {}
+    for uri, diagnostics_list in latest_reports.items():
+        path  = uri_to_path(uri)
+        
+        current_issues = []
         for diag in diagnostics_list:
             start = diag.get("range", {}).get("start", {})
-
             line_ = start.get("line", 0) + 1
             char_ = start.get("character", 0) + 1
             message = diag.get("message", "")
+            current_issues.append(f"  [Line {line_}:{char_}] {message}")
             
-            file_refrences[path].append(f"   [Line {line_}:{char_}] {message}")
+        last_shown = last_shown_diagnostics.get(uri, [])
+        new_issues = [issue for issue in current_issues if issue not in last_shown]
+        
+        if new_issues:
+            new_issues_to_show[path] = new_issues
+            
+        last_shown_diagnostics[uri] = current_issues
 
-    if file_refrences == {}:
+    if not new_issues_to_show:
         return ""
-
+        
     final_string = ["<new-diagnostics>The following new diagnostic issues were detected:\n"]
-    for path in file_refrences:
-        final_string.append(path)
-        final_string.extend(file_refrences[path])
-        final_string.append("\n")
-
-    return "\n".join(final_string[:-1]) + "</new-diagnostics>"
+    for path, issues in new_issues_to_show.items():
+        final_string.append(f"{path}:")
+        final_string.extend(issues)
+        final_string.append("")
+        
+    return "\n".join(final_string).strip() + "\n</new-diagnostics>"
 
 
 def advertetise_skill():
