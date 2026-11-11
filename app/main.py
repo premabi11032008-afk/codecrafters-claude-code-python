@@ -189,7 +189,7 @@ def tool_call(tool_calls, client):
 
             formated_notifications = ""
 
-            if lsp_client_ is not None:
+            if lsp_client_ is not None and function_.name == "Write":
                 time.sleep(0.5)
 
                 res = lsp_client_.notifications(after = cursor)
