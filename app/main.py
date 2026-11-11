@@ -6,10 +6,38 @@ from . import tools, lsp_client
 import json
 import re
 from .tool_list import tools_
+from utils import extract_path_start_line_char
 
 from openai import OpenAI
 
-tools.client = lsp_client.LSPClient.from_environment()
+lsp_client_ = lsp_client.LSPClient.from_environment()
+tools.client = lsp_client_
+cursor = 0
+
+def formate_notification(notifications : list):
+    file_refrences = {}
+    for notification in notifications:
+        notification = notification.get("params", {})
+        version = notification.get("version")
+
+        if version is not None and tools.opened_uris.get(notification.get("uri"), 1) != version:
+            continue
+
+        path, line_, char_ = extract_path_start_line_char(notification)
+        file_refrences.setdefault(path, []).append(f"   [Line {line_}:{char_}] {notification.get("message")}")
+
+    if file_refrences == {}:
+        return ""
+
+    final_string = ["<new-diagnostics>The following new diagnostic issues were detected:\n"]
+    for path in file_refrences:
+        final_string.append(path)
+        final_string.extend(file_refrences[path])
+        final_string.append("\n")
+
+    return "\n".join(final_string[:-1]) + "</new-diagnostics>"
+
+
 
 def advertetise_skill():
     skills = ["Available skills:"]
@@ -156,6 +184,8 @@ skills_list = advertetise_skill()
 
 
 def run_agent(client, messages, tools = tools_):
+    global cursor
+
     while True:
     
         chat = client.chat.completions.create(
@@ -172,7 +202,14 @@ def run_agent(client, messages, tools = tools_):
     
             responses = tool_call(array, client)
             messages.extend(responses)
-    
+
+            res = lsp_client_.notifications(after = cursor)
+            cursor = res.get("cursor", 0)
+            new_messages = res.get("notifications", [])
+
+            formated_notifications = formate_notification(new_messages)
+            if formated_notifications != "":
+                messages.append(formated_notifications)
         else:
             return chat.choices[0].message.content
 
